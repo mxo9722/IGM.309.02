@@ -54,12 +54,27 @@ void Application::Display(void)
 	//calculate the current position
 	vector3 v3CurrentPos;
 	
+	static int index = 0;
 
+	static float time = 0;
+	static float lastStep = GetTickCount();
+	time += GetTickCount() - lastStep;
+	lastStep = GetTickCount();
 
+	vector3 start= m_stopsList[index];
+	vector3 stop = m_stopsList[(index+1)%m_stopsList.size()];
+
+	v3CurrentPos = glm::lerp(start,stop,time/1000.0f);
+
+	if (time / 1000 >= 1.0f) {
+		index++;
+		time = 0;
+		index %= m_stopsList.size();
+	}
 
 
 	//your code goes here
-	v3CurrentPos = vector3(0.0f, 0.0f, 0.0f);
+
 	//-------------------
 	
 
