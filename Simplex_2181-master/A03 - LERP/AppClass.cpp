@@ -24,6 +24,8 @@ void Application::InitVariables(void)
 
 	float fSize = 1.0f; //initial size of orbits
 
+	
+
 	//creating a color using the spectrum 
 	uint uColor = 650; //650 is Red
 	//prevent division by 0
@@ -36,6 +38,22 @@ void Application::InitVariables(void)
 	{
 		vector3 v3Color = WaveLengthToRGB(uColor); //calculate color based on wavelength
 		m_shapeList.push_back(m_pMeshMngr->GenerateTorus(fSize, fSize - 0.1f, 3, i, v3Color)); //generate a custom torus and add it to the meshmanager
+		
+		
+		//HINT!!!v
+		std::vector<vector3> stopList; //add a list of stops to the list of lists of stops
+		
+
+		for (float j = 0; j < i; j++) {
+
+			float fRadius = fSize - 0.05f;
+			float angle = (j / (i))*2*PI;
+
+			stopList.push_back(vector3(cos(angle)*fRadius, sin(angle)*fRadius,0));
+		}
+
+		listStopList.push_back(stopList);
+
 		fSize += 0.5f; //increment the size for the next orbit
 		uColor -= static_cast<uint>(decrements); //decrease the wavelength
 	}
@@ -56,13 +74,17 @@ void Application::Display(void)
 	// Clear the screen
 	ClearScreen();
 
+	static float time = 0;
+	static uint clock = m_pSystem->GenClock(); 
+	time += m_pSystem->GetDeltaTime(clock);
+
 	matrix4 m4View = m_pCameraMngr->GetViewMatrix(); //view Matrix
 	matrix4 m4Projection = m_pCameraMngr->GetProjectionMatrix(); //Projection Matrix
 	matrix4 m4Offset = IDENTITY_M4; //offset of the orbits, starts as the global coordinate system
 	/*
 		The following offset will orient the orbits as in the demo, start without it to make your life easier.
 	*/
-	//m4Offset = glm::rotate(IDENTITY_M4, 1.5708f, AXIS_Z);
+	m4Offset = glm::rotate(IDENTITY_M4, 1.5708f, AXIS_Z);
 
 	// draw a shapes
 	for (uint i = 0; i < m_uOrbits; ++i)
@@ -70,8 +92,25 @@ void Application::Display(void)
 		m_pMeshMngr->AddMeshToRenderList(m_shapeList[i], glm::rotate(m4Offset, 1.5708f, AXIS_X));
 
 		//calculate the current position
-		vector3 v3CurrentPos = ZERO_V3;
+
+		static uint route = 0;
+
+		vector3 start = listStopList[i][route%(int)(listStopList[i].size())];
+		vector3 end = listStopList[i][(route+1) % (int)(listStopList[i].size())];
+
+		float travelTime = 1.0;
+
+		float fPercentage = MapValue(time, 0.0f, travelTime, 0.0f, 1.0f);
+		vector3 v3CurrentPos = glm::lerp(start, end, fPercentage);
 		matrix4 m4Model = glm::translate(m4Offset, v3CurrentPos);
+
+		if (fPercentage >= 1.0f)
+		{
+			route++;
+			time = m_pSystem->GetDeltaTime(clock);
+		}
+
+		
 
 		//draw spheres
 		m_pMeshMngr->AddSphereToRenderList(m4Model * glm::scale(vector3(0.1)), C_WHITE);
