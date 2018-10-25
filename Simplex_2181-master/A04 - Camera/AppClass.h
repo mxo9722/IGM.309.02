@@ -23,7 +23,9 @@ private:
 	static ImGuiObject gui; //GUI object
 
 	uint m_uRenderCallCount = 0; //count of render calls per frame
-	uint m_uControllerCount = 0; //count of controllers connected
+	uint m_uControllerCount = 0;  //count of controllers connected
+
+	vector2 m_v2rotation = vector2(0);//holds the pitch and yaw
 
 	vector3 m_v3Mouse = vector3(); //position of the mouse in the window
 	bool m_bFPC = false;// First Person Camera flag

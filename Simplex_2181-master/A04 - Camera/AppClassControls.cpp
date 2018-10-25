@@ -369,6 +369,31 @@ void Application::CameraRotation(float a_fSpeed)
 		fAngleX += fDeltaMouse * a_fSpeed;
 	}
 	//Change the Yaw and the Pitch of the camera
+
+
+	vector3 pos = m_pCamera->GetPosition();
+	vector3 target = m_pCamera->GetTarget();
+
+	//Updates the yaw and pitch coordinates
+	m_v2rotation += vector3(fAngleX, fAngleY,0.0f);
+
+	//prevents the pitch from going too far up or down
+	if(m_v2rotation.x<-PI/2)
+		m_v2rotation.x=-PI/2;
+	else if (m_v2rotation.x > PI / 2)
+		m_v2rotation.x = PI / 2;
+
+	//applies the yaw and pitch to the rotation of the camera
+	target = vector3(0,0,1)*glm::angleAxis(-m_v2rotation.x,vector3(1,0,0));
+	target = target*glm::angleAxis(-m_v2rotation.y, vector3(0, 1, 0));
+
+	//Adds the position of the player to the target because the target position is relative to the players current position.
+	target = target + pos;
+
+	//Sets the target posiion for the player.
+	m_pCamera->SetTarget (target) ;
+	
+
 	SetCursorPos(CenterX, CenterY);//Position the mouse in the center
 }
 //Keyboard
@@ -390,6 +415,10 @@ void Application::ProcessKeyboard(void)
 		m_pCamera->MoveForward(fSpeed);
 	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
 		m_pCamera->MoveForward(-fSpeed);
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+		m_pCamera->MoveSideways(fSpeed);
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+		m_pCamera->MoveSideways(-fSpeed);
 #pragma endregion
 }
 //Joystick
