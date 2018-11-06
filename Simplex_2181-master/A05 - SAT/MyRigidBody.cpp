@@ -286,7 +286,74 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 	Simplex that might help you [eSATResults] feel free to use it.
 	(eSATResults::SAT_NONE has a value of 0)
 	*/
+	//return 1;
 
-	//there is no axis test that separates this two objects
-	return eSATResults::SAT_NONE;
+	matrix4 au = GetModelMatrix(), bu = a_pOther->GetModelMatrix();
+	vector3 ae = GetHalfWidth(), be = a_pOther->GetHalfWidth();
+
+	float ra, rb;
+	matrix3 R, AbsR;
+
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+			R[i][j] = glm::dot(au[i],bu[j]);
+
+	vector3 t = a_pOther->GetCenterGlobal() - this->GetCenterGlobal();
+
+	float minRadA = glm::min(ae.x,glm::min(ae.y,ae.z));
+	float minRadB = glm::min(be.x, glm::min(be.y, be.z));
+
+	if (glm::distance(t, vector3(0)) < minRadA + minRadB)
+		return eSATResults::SAT_NONE;
+
+	t = vector3(glm::dot(t,(vector3)au[0]), glm::dot(t, (vector3)au[1]), glm::dot(t, (vector3)au[2]));
+
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+			AbsR[i][j] = glm::abs(R[i][j]) + glm::epsilon<float>();
+
+	for (int i = 0; i < 3; i++) {
+		ra = ae[i];
+		rb = be[0] * AbsR[i][0] + be[1] * AbsR[i][1] + be[2] * AbsR[i][2];
+		if (glm::abs(t[i]) > ra + rb) return 1;
+	}
+
+	ra = ae[1] * AbsR[2][0] + ae[2] * AbsR[1][0];
+	rb = be[1] * AbsR[0][2] + be[2] * AbsR[0][1];
+	if (glm::abs(t[2] * R[1][0] - t[1] * R[2][0]) > ra + rb) return 1;
+
+	ra = ae[1] * AbsR[2][1] + ae[2] * AbsR[1][1];
+	rb = be[0] * AbsR[0][2] + be[2] * AbsR[0][0];
+	if (glm::abs(t[2] * R[1][1] - t[1] * R[2][1]) > ra + rb) return 1;
+
+	// Test axis L = A0 x B2
+	ra = ae[1] * AbsR[2][2] + ae[2] * AbsR[1][2];
+	rb = be[0] * AbsR[0][1] + be[1] * AbsR[0][0];
+	if (glm::abs(t[2] * R[1][2] - t[1] * R[2][2]) > ra + rb) return 1;
+	// Test axis L = A1 x B0
+	ra = ae[0] * AbsR[2][0] + ae[2] * AbsR[0][0];
+	rb = be[1] * AbsR[1][2] + be[2] * AbsR[1][1];
+	if (glm::abs(t[0] * R[2][0] - t[2] * R[0][0]) > ra + rb) return 1;
+	// Test axis L = A1 x B1
+	ra = ae[0] * AbsR[2][1] + ae[2] * AbsR[0][1];
+	rb = be[0] * AbsR[1][2] + be[2] * AbsR[1][0];
+	if (glm::abs(t[0] * R[2][1] - t[2] * R[0][1]) > ra + rb) return 1;
+	// Test axis L = A1 x B2
+	ra = ae[0] * AbsR[2][2] + ae[2] * AbsR[0][2];
+	rb = be[0] * AbsR[1][1] + be[1] * AbsR[1][0];
+	if (glm::abs(t[0] * R[2][2] - t[2] * R[0][2]) > ra + rb) return 1;
+	// Test axis L = A2 x B0
+	ra = ae[0] * AbsR[1][0] + ae[1] * AbsR[0][0];
+	rb = be[1] * AbsR[2][2] + be[2] * AbsR[2][1];
+	if (glm::abs(t[1] * R[0][0] - t[0] * R[1][0]) > ra + rb) return 1;
+	// Test axis L = A2 x B1
+	ra = ae[0] * AbsR[1][1] + ae[1] * AbsR[0][1];
+	rb = be[0] * AbsR[2][2] + be[2] * AbsR[2][0];
+	if (glm::abs(t[1] * R[0][1] - t[0] * R[1][1]) > ra + rb) return 1;
+	// Test axis L = A2 x B2
+	ra = ae[0] * AbsR[1][2] + ae[1] * AbsR[0][2];
+	rb = be[0] * AbsR[2][1] + be[1] * AbsR[2][0];
+	if (glm::abs(t[1] * R[0][2] - t[0] * R[1][2]) > ra + rb) return 1;
+
+	return 0;
 }
